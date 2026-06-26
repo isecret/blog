@@ -1,7 +1,17 @@
-import { existsSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+    copyFileSync,
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    readdirSync,
+    renameSync,
+    rmSync,
+    writeFileSync
+} from 'node:fs';
 import { join } from 'node:path';
 
 const distDir = 'dist';
+const htmlAssetDir = join(distDir, '__html');
 
 if (!existsSync(distDir)) {
     process.exit(0);
@@ -26,6 +36,25 @@ for (const entry of readdirSync(distDir, { withFileTypes: true })) {
 }
 
 console.log(`Flattened ${flattened} .html article routes.`);
+
+rmSync(htmlAssetDir, { recursive: true, force: true });
+mkdirSync(htmlAssetDir, { recursive: true });
+
+let mirrored = 0;
+
+for (const entry of readdirSync(distDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.html')) continue;
+    if (entry.name === 'index.html' || entry.name === '404.html') continue;
+
+    const routeName = entry.name.slice(0, -'.html'.length);
+    const routeDir = join(htmlAssetDir, routeName);
+
+    mkdirSync(routeDir, { recursive: true });
+    copyFileSync(join(distDir, entry.name), join(routeDir, 'index.html'));
+    mirrored += 1;
+}
+
+console.log(`Mirrored ${mirrored} .html article routes for Cloudflare Pages.`);
 
 for (const entry of readdirSync(distDir, { withFileTypes: true })) {
     if (!entry.isFile() || !entry.name.startsWith('sitemap')) continue;
