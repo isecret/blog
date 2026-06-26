@@ -44,7 +44,7 @@ const siteConfig: SiteConfig = {
     comments: {
         waline: {
             enabled: true,
-            serverURL: import.meta.env.PUBLIC_WALINE_SERVER_URL,
+            serverURL: import.meta.env.PUBLIC_WALINE_SERVER_URL || 'https://waline.wangmao.me',
             lang: 'zh-CN'
         }
     },

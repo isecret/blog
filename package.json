@@ -11,7 +11,6 @@
         "import:typecho": "node scripts/import-typecho.mjs"
     },
     "dependencies": {
-        "@astrojs/cloudflare": "^12.6.13",
         "@astrojs/mdx": "^4.3.14",
         "@astrojs/rss": "^4.0.13",
         "@astrojs/sitemap": "^3.6.0",

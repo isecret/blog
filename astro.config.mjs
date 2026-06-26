@@ -1,4 +1,3 @@
-import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
@@ -12,8 +11,5 @@ export default defineConfig({
             theme: 'github-light'
         }
     },
-    adapter: cloudflare({
-        imageService: 'compile'
-    }),
     integrations: [mdx(), sitemap()]
 });
