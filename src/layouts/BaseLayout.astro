@@ -1,0 +1,66 @@
+---
+import BaseHead, { type Props as HeadProps } from '../components/BaseHead.astro';
+import siteConfig from '../data/site-config';
+
+export type Props = HeadProps & { showHeader?: boolean };
+
+const { ...head } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <BaseHead {...head} />
+        <script>
+            function detectColorScheme() {
+                let theme = 'light';
+                if (localStorage.getItem('theme')) {
+                    theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    theme = 'dark';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            detectColorScheme();
+            window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', detectColorScheme);
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <header class="header-outer">
+                <div class="header-site">
+                    <a class="header-title" href="/">{siteConfig.title}</a>
+                    <div class="header-subtitle">{siteConfig.subtitle}</div>
+                </div>
+                <nav class="header-menu" aria-label="Primary navigation">
+                    {
+                        siteConfig.headerNavLinks?.map((link, index, links) => (
+                            <>
+                                <span class="header-nav">
+                                    <a href={link.href}>{link.text}</a>
+                                </span>
+                                {index < links.length - 1 && <span class="flag">/</span>}
+                            </>
+                        ))
+                    }
+                </nav>
+            </header>
+            <main id="content-outer">
+                <slot />
+            </main>
+            <footer class="footer-outer">
+                <div class="footer-items">
+                    <span class="footer-copyright">©</span>
+                    <span class="footer-year">{siteConfig.since} - {year}</span>
+                    <span class="footer-author">{siteConfig.title}</span>
+                </div>
+                <div class="footer-inner">
+                    <span class="footer-other">
+                        Theme <a href="https://github.com/isecret/Hola">Hola</a> / <a href="https://astro.build">Astro</a>.
+                    </span>
+                </div>
+            </footer>
+        </div>
+    </body>
+</html>

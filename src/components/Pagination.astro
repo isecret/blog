@@ -1,0 +1,20 @@
+---
+const { page, class: className = '' } = Astro.props;
+---
+
+<nav aria-label="Pagination" class:list={['pagination', className]}>
+    {
+        page.url.prev && (
+            <div class="nav-next nav-item">
+                <a href={page.url.prev}>‹ Newer</a>
+            </div>
+        )
+    }
+    {
+        page.url.next && (
+            <div class="nav-prev nav-item">
+                <a href={page.url.next}>Older ›</a>
+            </div>
+        )
+    }
+</nav>

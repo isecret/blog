@@ -1,0 +1,21 @@
+---
+import { type CollectionEntry } from 'astro:content';
+import { getPostUrl } from '../utils/url-utils';
+
+type Props = { post: CollectionEntry<'blog'> };
+
+const { post } = Astro.props;
+const { title, publishDate } = post.data;
+const dateTitle = publishDate.toISOString();
+const shortDate = publishDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+});
+---
+
+<div class="recent-post-items">
+    <span class="recent-post-time" title={dateTitle}>{shortDate}</span>
+    <span class="recent-post-item">
+        <a href={getPostUrl(post)}>{title}</a>
+    </span>
+</div>

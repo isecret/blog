@@ -1,0 +1,71 @@
+---
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+import WalineComments from '../components/WalineComments.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { slugify } from '../utils/common-utils';
+import { sortItemsByDateDesc } from '../utils/data-utils';
+import { getPostUrl } from '../utils/url-utils';
+
+export async function getStaticPaths() {
+    const posts = (await getCollection('blog')).sort(sortItemsByDateDesc);
+    const postCount = posts.length;
+    return posts.map((post, index) => ({
+        params: { slug: post.id },
+        props: {
+            post,
+            olderPost: index + 1 !== postCount ? posts[index + 1] : null,
+            newerPost: index !== 0 ? posts[index - 1] : null
+        }
+    }));
+}
+
+type Props = {
+    post: CollectionEntry<'blog'>;
+    olderPost: CollectionEntry<'blog'> | null;
+    newerPost: CollectionEntry<'blog'> | null;
+};
+
+const { post, olderPost, newerPost } = Astro.props;
+const { title, publishDate, updatedDate, excerpt, tags = [], seo } = post.data;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={seo?.title ?? title} description={seo?.description ?? excerpt} image={seo?.image} pageType="article" showHeader={false}>
+    <article class="post">
+        <h1 class="post-title">{title}</h1>
+        <Content />
+    </article>
+    <div class="post-footer">
+        <div class="post-author">
+            <span>Created at <FormattedDate date={publishDate} /></span>
+            {updatedDate && <span> / Updated at <FormattedDate date={updatedDate} /></span>}
+        </div>
+        {
+            tags.length > 0 && (
+                <div class="post-tags">
+                    {tags.map((tag) => (
+                        <a href={`/tags/${slugify(tag)}`}>#{tag}</a>
+                    ))}
+                </div>
+            )
+        }
+        {
+            (olderPost || newerPost) && (
+                <div class="pagination">
+                    {olderPost && (
+                        <div class="nav-next nav-item">
+                            <a href={getPostUrl(olderPost)}>‹ {olderPost.data.title}</a>
+                        </div>
+                    )}
+                    {newerPost && (
+                        <div class="nav-prev nav-item">
+                            <a href={getPostUrl(newerPost)}>{newerPost.data.title} ›</a>
+                        </div>
+                    )}
+                </div>
+            )
+        }
+    </div>
+    <WalineComments />
+</BaseLayout>

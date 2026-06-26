@@ -1,0 +1,38 @@
+---
+import type { GetStaticPathsOptions, Page } from 'astro';
+import { type CollectionEntry, getCollection } from 'astro:content';
+import Pagination from '../../../components/Pagination.astro';
+import PostPreview from '../../../components/PostPreview.astro';
+import siteConfig from '../../../data/site-config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getAllTags, getPostsByTag, sortItemsByDateDesc } from '../../../utils/data-utils';
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+    const posts = (await getCollection('blog')).sort(sortItemsByDateDesc);
+    const tags = getAllTags(posts);
+
+    return tags.flatMap((tag) => {
+        const filteredPosts = getPostsByTag(posts, tag.id);
+        return paginate(filteredPosts, {
+            params: { id: tag.id },
+            pageSize: siteConfig.postsPerPage || 12
+        });
+    });
+}
+
+type Props = { page: Page<CollectionEntry<'blog'>> };
+
+const { page } = Astro.props;
+const blog = page.data;
+const allPosts = await getCollection('blog');
+const allTags = getAllTags(allPosts);
+const currentTag = allTags.find((tag) => tag.id === Astro.params.id);
+---
+
+<BaseLayout title={`Tag - ${currentTag?.name}`} description={`Posts tagged ${currentTag?.name}`} showHeader={false}>
+    <article class="tag">
+        <h1 class="tag-title">{currentTag?.name}</h1>
+        {blog.map((post) => <PostPreview post={post} />)}
+    </article>
+    <Pagination page={page} class="noborder" />
+</BaseLayout>

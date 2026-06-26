@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAllTags, getPostsByTag, sortItemsByDateDesc } from '../../utils/data-utils';
+
+const posts = (await getCollection('blog')).sort(sortItemsByDateDesc);
+const tags = getAllTags(posts).sort((tagA, tagB) => {
+    const postCountTagA = getPostsByTag(posts, tagA.id).length;
+    const postCountTagB = getPostsByTag(posts, tagB.id).length;
+    return postCountTagB - postCountTagA;
+});
+---
+
+<BaseLayout title="Tags" description="All tags" showHeader={false}>
+    <article class="tag">
+        <h1 class="tag-title">All Tags</h1>
+        {
+            tags.map((tag) => {
+                const postCount = getPostsByTag(posts, tag.id).length;
+                return (
+                    <div class="recent-post-items">
+                        <span class="recent-post-time">{postCount} posts</span>
+                        <span class="recent-post-item">
+                            <a href={`/tags/${tag.id}`}>#{tag.name}</a>
+                        </span>
+                    </div>
+                );
+            })
+        }
+    </article>
+</BaseLayout>

@@ -1,0 +1,61 @@
+---
+import { getCollection } from 'astro:content';
+import Pagination from '../../components/Pagination.astro';
+import PostPreview from '../../components/PostPreview.astro';
+import siteConfig from '../../data/site-config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { sortItemsByDateDesc } from '../../utils/data-utils';
+
+const pageSize = siteConfig.postsPerPage || 12;
+const allPosts = (await getCollection('blog')).sort(sortItemsByDateDesc);
+const totalPages = Math.ceil(allPosts.length / pageSize);
+
+export async function getStaticPaths() {
+    const posts = (await getCollection('blog')).sort(sortItemsByDateDesc);
+    const pageSize = siteConfig.postsPerPage || 12;
+    const totalPages = Math.ceil(posts.length / pageSize);
+    return Array.from({ length: Math.max(totalPages - 1, 0) }, (_, index) => {
+        const currentPage = index + 2;
+        return {
+            params: { page: String(currentPage) },
+            props: { currentPage }
+        };
+    });
+}
+
+type Props = { currentPage: number };
+
+const { currentPage } = Astro.props;
+const start = (currentPage - 1) * pageSize;
+const blog = allPosts.slice(start, start + pageSize);
+const groupedPosts = blog.reduce<Map<number, typeof allPosts>>((groups, post) => {
+    const year = post.data.publishDate.getFullYear();
+    const list = groups.get(year) ?? [];
+    list.push(post);
+    groups.set(year, list);
+    return groups;
+}, new Map());
+const page = {
+    url: {
+        prev: currentPage === 2 ? '/' : `/page/${currentPage - 1}`,
+        next: currentPage < totalPages ? `/page/${currentPage + 1}` : undefined
+    }
+};
+---
+
+<BaseLayout title={`Page ${currentPage}`} description={siteConfig.description}>
+    <article class="recent-posts">
+        <h1 class="recent-title">Home</h1>
+        {
+            [...groupedPosts.entries()].map(([year, yearPosts]) => (
+                <>
+                    <div class="recent-post-year-title">
+                        <h2 class="recent-post-year">{year}</h2>
+                    </div>
+                    {yearPosts.map((post) => <PostPreview post={post} />)}
+                </>
+            ))
+        }
+    </article>
+    <Pagination page={page} class="noborder" />
+</BaseLayout>

@@ -5,6 +5,7 @@ dist/
 
 # dependencies
 node_modules/
+.pnpm-store/
 
 # logs
 npm-debug.log*
@@ -17,8 +18,11 @@ pnpm-debug.log*
 .env
 .env.production
 
+# local Cloudflare/Wrangler state
+.wrangler/
+
 # macOS-specific files
 .DS_Store
 
-# jetbrains setting folder
-.idea/
+# local import sources
+typecho.db

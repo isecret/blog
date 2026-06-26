@@ -1,0 +1,104 @@
+---
+import siteConfig from '../data/site-config';
+
+const waline = siteConfig.comments?.waline;
+const enabled = waline?.enabled ?? false;
+const serverURL = waline?.serverURL ?? '';
+const lang = waline?.lang ?? 'zh-CN';
+const showConfigNote = import.meta.env.DEV && enabled && !serverURL;
+---
+
+{
+    enabled && serverURL && (
+        <section class="comment-section" aria-labelledby="comment-title">
+            <h2 id="comment-title" class="comment-title">Comments</h2>
+            <div id="waline" data-server-url={serverURL} data-lang={lang} />
+            <script>
+                import { init } from '@waline/client';
+                import '@waline/client/style';
+
+                const container = document.getElementById('waline');
+                if (container) {
+                    const serverURL = container.dataset.serverUrl.replace(/\/+$/, '');
+                    const lang = container.dataset.lang || 'zh-CN';
+                    const path = window.location.pathname.replace(/\/$/, '') || '/';
+
+                    const getWalineUser = () => {
+                        try {
+                            const user = JSON.parse(localStorage.getItem('WALINE_USER') || sessionStorage.getItem('WALINE_USER') || '{}');
+                            if (!user || typeof user !== 'object') {
+                                localStorage.removeItem('WALINE_USER');
+                                sessionStorage.removeItem('WALINE_USER');
+                                return {};
+                            }
+                            return user;
+                        } catch {
+                            localStorage.removeItem('WALINE_USER');
+                            sessionStorage.removeItem('WALINE_USER');
+                            return {};
+                        }
+                    };
+
+                    const isAdminLoggedIn = () => Boolean(getWalineUser()?.token);
+
+                    getWalineUser();
+
+                    init({
+                        el: '#waline',
+                        serverURL,
+                        lang,
+                        dark: 'html[data-theme="dark"]',
+                        login: 'disable',
+                        noRss: true,
+                        path
+                    });
+
+                    const openAdminLogin = () => {
+                        window.open(`${serverURL}/ui/login`, 'waline-admin-login', 'width=420,height=260');
+                    };
+
+                    const logoutAdmin = () => {
+                        localStorage.removeItem('WALINE_USER');
+                        sessionStorage.removeItem('WALINE_USER');
+                        window.location.reload();
+                    };
+
+                    window.addEventListener('message', (event) => {
+                        if (event.origin !== new URL(serverURL).origin || event.data?.type !== 'userInfo') return;
+                        localStorage.setItem('WALINE_USER', JSON.stringify(event.data.data));
+                        window.location.reload();
+                    });
+
+                    const insertAdminLink = () => {
+                        const power = container.querySelector('.wl-power');
+                        if (!power || power.querySelector('.waline-admin-login')) return Boolean(power);
+                        const separator = document.createTextNode(' / ');
+                        const link = document.createElement('button');
+                        link.type = 'button';
+                        link.className = 'waline-admin-login';
+                        link.textContent = isAdminLoggedIn() ? 'Logout' : 'Manage';
+                        link.addEventListener('click', isAdminLoggedIn() ? logoutAdmin : openAdminLogin);
+                        power.append(separator, link);
+                        return true;
+                    };
+
+                    if (!insertAdminLink()) {
+                        const observer = new MutationObserver(() => {
+                            if (insertAdminLink()) observer.disconnect();
+                        });
+                        observer.observe(container, { childList: true, subtree: true });
+                    }
+                }
+            </script>
+        </section>
+    )
+}
+
+{
+    showConfigNote && (
+        <section class="comment-section" aria-labelledby="comment-title">
+            <h2 id="comment-title" class="comment-title">Comments</h2>
+            <p class="comment-config-note">Set PUBLIC_WALINE_SERVER_URL to enable Waline comments.</p>
+        </section>
+    )
+}
